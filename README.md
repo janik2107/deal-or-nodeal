@@ -5,6 +5,7 @@ nach **rechts** wischen = Deal, nach **links** = NoDeal, ↶ = rückgängig.
 
 **App:** https://janik2107.github.io/deal-or-nodeal/ → in Safari öffnen → Teilen → „Zum Home-Bildschirm“.
 
+- Getrennte Stapel für MFH, Haus und ETW (gleiche Rechnung).
 - Pro Karte: Eckdaten, Miete pro Monat und Jahr, Bruttorendite, Faktor, Kreditrechnung (Annuität), Cashflow, Eigenkapital für die Kaufnebenkosten, Links zum Exposé und zu ImmoMetrica.
 - Oben einstellbar: Finanzierung 100/90/80 %, Zins, Laufzeit, Sortierung (Score, Cashflow, Rendite).
 - Swipes werden dauerhaft im Gerät gespeichert (localStorage). Unter „Deals“ gibt es Deals und NoDeals, Export als CSV oder Text, unter „Mehr“ das Zurücksetzen.
@@ -75,7 +76,7 @@ Es wird immer **zusammengeführt** und nie ersetzt:
 | Feld | Pflicht | Bedeutung |
 |---|---|---|
 | `id` | empfohlen | Stabile ID. Fehlt sie, wird sie gebildet: `im:<ImmoMetrica-Offer-Nr.>`, sonst der Exposé-Link. |
-| `typ` | – | `MFH` (Standard) oder `ETW` |
+| `typ` | – | `MFH` (Standard), `Haus` (Ein-/Zweifamilien-, Reihen-, Doppelhaus) oder `ETW` |
 | `preis` | ja | Kaufpreis in € |
 | `mieteJahr` | ja | Ist-Jahresnettokaltmiete in €. Alternativ `mieteMonat`, das wird ×12 gerechnet. |
 | `expose` / `immometrica` | mind. einer | Links zum Inserat. Bei gleichem Link wird nur ein Knopf gezeigt. |

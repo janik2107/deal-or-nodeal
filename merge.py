@@ -55,7 +55,7 @@ def check(x, i, err, warn):
         if p.scheme != 'https' or not p.netloc: err.append(f'{tag}: {k} ist keine https-URL')
         elif not any(p.netloc.lower().removeprefix('www.').endswith(h) for h in HOSTS): warn.append(f'{tag}: unbekannter Anbieter-Host {p.netloc}')
         if p.query and re.search(r'(token|session|sid|user|mail)=', p.query, re.I): err.append(f'{tag}: {k} enthält Sitzungs-/Nutzerparameter')
-    if x.get('typ') not in ('MFH', 'ETW'): err.append(f'{tag}: typ muss MFH oder ETW sein')
+    if x.get('typ') not in ('MFH', 'ETW', 'Haus'): err.append(f'{tag}: typ muss MFH, Haus oder ETW sein')
     if x.get('plz') and not re.fullmatch(r'\d{5}', str(x['plz'])): err.append(f'{tag}: plz ungültig')
     if x.get('land') and x['land'] not in ('SN', 'ST', 'TH'): err.append(f'{tag}: land ungültig')
     if x.get('linkstatus') and x['linkstatus'] not in ('ok', 'swap', 'blk', 'im'): warn.append(f'{tag}: linkstatus unbekannt')
@@ -109,8 +109,8 @@ def main():
     if stand <= str(base.get('stand', '')): stand = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     if stand <= str(base.get('stand', '')): sys.exit(f'stand {stand} ist nicht neuer als {base.get("stand")}')
     out = dict(base); out['stand'] = stand; out['listings'] = base['listings'] + add
-    cnt = {t: sum(1 for x in out['listings'] if x.get('typ') == t) for t in ('MFH', 'ETW')}
-    print(f'stand: {base.get("stand")} → {stand} · gesamt {len(out["listings"])} ({cnt["MFH"]} MFH, {cnt["ETW"]} ETW)')
+    cnt = {t: sum(1 for x in out['listings'] if x.get('typ') == t) for t in ('MFH', 'Haus', 'ETW')}
+    print(f'stand: {base.get("stand")} → {stand} · gesamt {len(out["listings"])} ({cnt["MFH"]} MFH, {cnt["Haus"]} Haus, {cnt["ETW"]} ETW)')
     if a.dry_run: print('Probelauf: nichts geschrieben.'); return
     json.dump(out, open(DATA, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     git = lambda *c: subprocess.run(['git', '-C', HERE, *c], check=True)

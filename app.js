@@ -1,5 +1,5 @@
 'use strict';
-const VERSION='dn-v1';
+const VERSION='dn-v2';
 const KEY='dealnodeal-v1';
 const $=s=>document.querySelector(s),view=$('#view');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -26,10 +26,12 @@ const U={tab:'swipe',busy:false};
 const imId=u=>{const m=/immometrica\.com\/(?:[a-z]{2}\/)?offer\/(\d+)/.exec(u||'');return m?'im:'+m[1]:null};
 const deriveId=x=>x.id?String(x.id):(imId(x.immometrica)||imId(x.expose)||(x.expose?String(x.expose).trim():null));
 const FIELDS=['typ','ort','plz','titel','preis','wfl','we','baujahr','zustand','mieteJahr','brutto','faktor','preisQm','netto','score','expose','immometrica','linkstatus','privat','makler','land'];
+const TYPES=[['MFH','MFH','Mehrfamilienhäusern'],['Haus','Haus','Häusern'],['ETW','ETW','Wohnungen']];
+const normTyp=t=>{t=String(t||'');return/etw|wohnung/i.test(t)?'ETW':/^(haus|efh|zfh|einfamilien|zweifamilien|reihen|doppel)/i.test(t)?'Haus':'MFH'};
 function clean(x){const o={};for(const k of FIELDS)if(x[k]!==undefined&&x[k]!==null&&x[k]!=='')o[k]=x[k];
  for(const k of ['preis','wfl','we','baujahr','mieteJahr','brutto','faktor','preisQm','netto','score','makler'])if(k in o){const v=typeof o[k]==='number'?o[k]:num(o[k]);if(isFinite(v))o[k]=v;else delete o[k]}
  if(o.mieteJahr==null&&isFinite(num(x.mieteMonat)))o.mieteJahr=num(x.mieteMonat)*12;
- o.typ=/etw|wohnung/i.test(o.typ||'')?'ETW':'MFH';o.plz=o.plz!=null?String(o.plz).padStart(5,'0').slice(0,5):'';
+ o.typ=normTyp(o.typ);o.plz=o.plz!=null?String(o.plz).padStart(5,'0').slice(0,5):'';
  if(o.brutto==null&&o.preis&&o.mieteJahr)o.brutto=+(o.mieteJahr/o.preis*100).toFixed(2);
  if(o.faktor==null&&o.preis&&o.mieteJahr)o.faktor=+(o.preis/o.mieteJahr).toFixed(1);
  if(o.preisQm==null&&o.preis&&o.wfl)o.preisQm=Math.round(o.preis/o.wfl);
@@ -96,13 +98,13 @@ function cardHtml(x){const k=calc(x),s=S.settings;const imSame=x.immometrica&&x.
  <div class="lnote">${esc([STAT[x.linkstatus],host(x.expose||x.immometrica)].filter(Boolean).join(' · '))}</div>`}
 function swipe(){const s=S.settings,m=s.mode,L=ofMode(m),d=deck();if(U.front){const i=d.findIndex(x=>x.id===U.front);if(i>0)d.unshift(d.splice(i,1)[0])}const sw=L.filter(x=>S.sw[x.id]),nd=sw.filter(x=>S.sw[x.id].d).length;
  const top=d[0];
- return`<h1>Deal or NoDeal<span class="sub">MFH Sachsen & Halle · → Deal · ← NoDeal</span></h1>
- ${seg('mode',[['MFH','MFH ('+ofMode('MFH').length+')'],['ETW','ETW ('+ofMode('ETW').length+')']],m)}
+ return`<h1>Deal or NoDeal<span class="sub">Sachsen & Halle · → Deal · ← NoDeal</span></h1>
+ ${seg('mode',TYPES.filter(([t])=>t===m||ofMode(t).length).map(([t,l])=>[t,l+' ('+ofMode(t).length+')']),m)}
  ${settingsPanel()}
  <div class="meta"><span>${top?`Karte <b>${sw.length+1}</b> von ${L.length}`:`${L.length} von ${L.length} bewertet`}</span><span><span class="h">♥ ${nd}</span> &nbsp; <span class="x">✕ ${sw.length-nd}</span></span></div>
  ${top?`<div class="stack">${d[2]?'<div class="under u2"></div>':''}${d[1]?'<div class="under"></div>':''}<div class="card ${U.anim||''}" id="card" data-id="${esc(top.id)}">${cardHtml(top)}</div></div>
  <div class="assume">Annahmen: Annuitätendarlehen, Kaufnebenkosten aus Eigenkapital (Grunderwerbsteuer Sachsen 5,5 % / Sachsen-Anhalt 5,0 %, Notar & Grundbuch 2 %, Makler 3,57 % falls nicht privat). Cashflow = Ist-Miete − Rate − 20 % Bewirtschaftung, vor Steuern. Details unter „Mehr“.</div>`
- :`<div class="empty"><div class="e">🎉</div><h2>Alles bewertet</h2><p>${nd} Deals von ${L.length} ${m==='MFH'?'Mehrfamilienhäusern':'Wohnungen'}.</p><button class="pill" style="display:inline-flex;padding:13px 26px" data-act="tab" data-v="deals">Deals ansehen</button></div>`}`}
+ :`<div class="empty"><div class="e">🎉</div><h2>Alles bewertet</h2><p>${nd} Deals von ${L.length} ${(TYPES.find(t=>t[0]===m)||TYPES[0])[2]}.</p><button class="pill" style="display:inline-flex;padding:13px 26px" data-act="tab" data-v="deals">Deals ansehen</button></div>`}`}
 function decide(d,via){if(U.busy)return;const c=$('#card');if(!c)return;const id=c.dataset.id;U.busy=true;
  const w=window.innerWidth;c.classList.add('anim');c.style.transform=`translateX(${d?1.4*w:-1.4*w}px) rotate(${d?22:-22}deg)`;c.style.opacity='0';
  const st=c.querySelector(d?'.stamp.deal':'.stamp.nodeal');if(st)st.style.opacity=1;
@@ -145,7 +147,7 @@ async function copy(t){try{await navigator.clipboard.writeText(t);return true}ca
 function more(){const s=S.settings,n=all().length,sw=Object.keys(S.sw).length,d=Object.values(S.sw).filter(x=>x.d).length;
  return`<h1>Mehr</h1>
  <div class="gh2">Darstellung</div>${seg('theme',[['auto','Automatisch'],['light','Hell'],['dark','Dunkel']],s.theme)}
- <div class="gh2">Daten</div><div class="group"><div class="cell"><div class="l">Objekte<small>Stand ${esc(S.stand||'–')}</small></div><div class="r">${n}<small style="color:var(--sec)">${ofMode('MFH').length} MFH · ${ofMode('ETW').length} ETW</small></div></div>
+ <div class="gh2">Daten</div><div class="group"><div class="cell"><div class="l">Objekte<small>Stand ${esc(S.stand||'–')}</small></div><div class="r">${n}<small style="color:var(--sec)">${TYPES.map(([t])=>ofMode(t).length+' '+t).join(' · ')}</small></div></div>
  <button class="cell btn" data-act="import">Daten importieren (JSON)</button><button class="cell btn" data-act="reload">Mitgelieferte Daten neu laden</button></div>
  <div class="foot">Neue Objekte werden hinzugefügt, bekannte (gleiche ID bzw. gleicher Exposé-/ImmoMetrica-Link) aktualisiert. Deine Swipes bleiben erhalten.</div>
  <div class="gh2">Swipes</div><div class="group"><div class="cell"><div class="l">Bewertet</div><div class="r">${sw} <small style="color:var(--sec)">♥ ${d} · ✕ ${sw-d}</small></div></div>
