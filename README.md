@@ -93,3 +93,28 @@ Statt des Objekts mit `listings` kann die Datei auch direkt eine Liste von Objek
 
 Reines HTML, CSS und JavaScript ohne Build-Schritt: `index.html`, `styles.css`, `app.js`, `sw.js` (Cache-Version `VERSION`), `manifest.json`, `data.json`.
 Die Version steht als `VERSION` in `app.js` und `sw.js` und ist beim Ändern in beiden Dateien hochzuzählen.
+
+## Neue Daten zusammenführen (`merge.py`)
+
+```
+python3 merge.py NEW.json --dry-run          # nur prüfen
+python3 merge.py NEW.json                    # prüfen, zusammenführen, lokal committen
+python3 merge.py NEW.json --push             # … und pushen
+```
+
+Das Skript prüft zuerst die Daten:
+- Pflichtfelder, Zahlen und https-Links müssen stimmen.
+- Kontaktdaten (E-Mail, Telefon, Namen, Straßen) dürfen nicht enthalten sein.
+- Auffällige Objekte werden gemeldet: unplausible Rendite, Häuser, die als ETW geliefert wurden, und dasselbe Objekt unter anderer Inserat-Nr.
+
+Danach führt es zusammen:
+- Bestehende Objekte bleiben unverändert.
+- Duplikate (gleiche `id`, Exposé- oder ImmoMetrica-URL) werden übersprungen.
+- Neue Objekte werden angehängt und `stand` hochgesetzt.
+
+Exit-Codes:
+
+| Code | Bedeutung |
+|---|---|
+| 2 | Fehler, es wird nichts geschrieben |
+| 3 | Warnungen, es wird nichts geschrieben. Mit `--allow-warnings` werden die Daten trotzdem übernommen. |
