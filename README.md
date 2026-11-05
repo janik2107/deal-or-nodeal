@@ -6,6 +6,7 @@ nach **rechts** wischen = Deal, nach **links** = NoDeal, ↶ = rückgängig.
 **App:** https://janik2107.github.io/deal-or-nodeal/ → in Safari öffnen → Teilen → „Zum Home-Bildschirm“.
 
 - Getrennte Stapel für MFH, Haus und ETW (gleiche Rechnung).
+- Superlike: Wisch nach oben oder blauer Stern-Button; zählt als Deal, markiert mit ★, eigener Filter und ganz oben in der Deal-Liste. Export enthält den Status.
 - Pro Karte: Eckdaten, Miete pro Monat und Jahr, Bruttorendite, Faktor, Kreditrechnung (Annuität), Cashflow, steuerliche Betrachtung Jahr 1 (Cashflow nach Steuer), Eigenkapital für die Kaufnebenkosten, Links zum Exposé und zu ImmoMetrica.
 - Oben einstellbar: Finanzierung 100/90/80 %, Zins, Laufzeit, Steuersatz (Standard 30 %), AfA an/aus, Sortierung (Score, Cashflow, Cashflow nach Steuer, Rendite). Deal-Liste sortierbar nach Neueste, Cashflow, Cashflow nach Steuer.
 - Swipes werden dauerhaft im Gerät gespeichert (localStorage). Unter „Deals“ gibt es Deals und NoDeals, Export als CSV oder Text, unter „Mehr“ das Zurücksetzen.

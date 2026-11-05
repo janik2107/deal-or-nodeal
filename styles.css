@@ -38,9 +38,9 @@ a{color:var(--accent)}
 .card{position:relative;background:var(--card);border-radius:28px;padding:22px 20px 18px;box-shadow:var(--shadow);user-select:none;-webkit-user-select:none;touch-action:pan-y;will-change:transform;cursor:grab;z-index:2}
 .card.drag{cursor:grabbing}.card.anim{transition:transform .38s cubic-bezier(.2,.9,.25,1),opacity .38s}
 .card.enter{animation:enter .32s cubic-bezier(.2,.9,.25,1)}@keyframes enter{from{transform:translateY(10px) scale(.95);opacity:.6}to{transform:none;opacity:1}}
-.card.back{animation:back .36s cubic-bezier(.2,.9,.25,1)}@keyframes back{from{transform:translateX(var(--from,-120%)) rotate(var(--rot,-12deg));opacity:.4}to{transform:none;opacity:1}}
+.card.back{animation:back .36s cubic-bezier(.2,.9,.25,1)}@keyframes back{from{transform:translate(var(--from,-120%),var(--fy,0)) rotate(var(--rot,-12deg));opacity:.4}to{transform:none;opacity:1}}
 .stamp{position:absolute;top:22px;padding:6px 12px;border:3px solid;border-radius:12px;font:800 24px/1 -apple-system,"SF Pro Display",system-ui,sans-serif;letter-spacing:1px;opacity:0;pointer-events:none;z-index:3;text-transform:uppercase}
-.stamp.deal{left:20px;color:var(--green);transform:rotate(-14deg)}.stamp.nodeal{right:20px;color:var(--red);transform:rotate(14deg)}
+.stamp.deal{left:20px;color:var(--green);transform:rotate(-14deg)}.stamp.nodeal{right:20px;color:var(--red);transform:rotate(14deg)}.stamp.super{left:50%;top:18px;color:var(--accent);transform:translateX(-50%) rotate(-6deg);border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,122,255,.15)}
 .tags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-right:0}
 .tag{font-size:12px;font-weight:600;padding:3px 8px;border-radius:7px;background:var(--fill);color:var(--sec)}
 .tag.score{background:var(--tint);color:var(--accent)}.tag.hi{background:rgba(52,199,89,.15);color:var(--green)}
@@ -65,11 +65,12 @@ a{color:var(--accent)}
 .empty{background:var(--card);border-radius:28px;padding:40px 24px;text-align:center;box-shadow:var(--shadow)}
 .empty .e{font-size:52px}.empty h2{margin:10px 0 6px}.empty p{color:var(--sec);margin:0 0 18px}
 /* Round action buttons */
-#actions{position:fixed;left:0;right:0;bottom:calc(49px + env(safe-area-inset-bottom));display:flex;justify-content:center;align-items:center;gap:26px;padding:26px 0 14px;z-index:9;pointer-events:none;background:linear-gradient(to top,var(--bg) 45%,transparent)}
+#actions{position:fixed;left:0;right:0;bottom:calc(49px + env(safe-area-inset-bottom));display:flex;justify-content:center;align-items:center;gap:18px;padding:26px 0 14px;z-index:9;pointer-events:none;background:linear-gradient(to top,var(--bg) 45%,transparent)}
 #actions .rb{pointer-events:auto;border-radius:50%;background:var(--card);box-shadow:var(--bshadow);display:flex;align-items:center;justify-content:center;transition:transform .15s,opacity .2s;font-weight:700}
 #actions .rb:active{transform:scale(.9)}#actions .rb:disabled{opacity:.35;cursor:default}
 .rb.no,.rb.yes{width:70px;height:70px;font-size:30px}.rb.no{color:var(--red)}.rb.yes{color:var(--green);font-size:32px}
-.rb.undo{width:50px;height:50px;font-size:24px;color:var(--orange)}
+.rb.undo{width:48px;height:48px;font-size:22px;color:var(--orange)}
+.rb.super{width:56px;height:56px;color:var(--accent)}.rb.super svg{display:block}
 /* Lists */
 .group{background:var(--card);border-radius:14px;overflow:hidden}
 .cell{display:flex;align-items:center;gap:12px;padding:12px 14px;position:relative;width:100%;text-align:left;font-size:16px}
@@ -110,3 +111,9 @@ a{color:var(--accent)}
 .deal .kst{display:flex;align-items:baseline;gap:8px;margin-top:10px;padding:9px 12px;background:var(--fill);border-radius:12px;flex-wrap:wrap}
 .deal .kst span{font-size:13px;color:var(--sec);flex:1 1 auto}.deal .kst b{font-size:20px;font-variant-numeric:tabular-nums}.deal .kst small{font-size:13px;color:var(--sec)}
 .dtax{margin-top:8px}.dtax summary{font-size:13px;color:var(--accent);cursor:pointer;padding:4px 0}.dtax .grp{margin-top:6px}
+
+/* dn-v4 Superlike */
+.meta .su{color:var(--accent);font-weight:600}
+.deal.super{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.deal .star{color:var(--accent);margin-right:2px}
+.mv.su{color:var(--accent);border:1.5px solid transparent}.mv.su.on{background:var(--tint);border-color:var(--accent)}
