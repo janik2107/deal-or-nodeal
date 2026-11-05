@@ -6,8 +6,8 @@ nach **rechts** wischen = Deal, nach **links** = NoDeal, ↶ = rückgängig.
 **App:** https://janik2107.github.io/deal-or-nodeal/ → in Safari öffnen → Teilen → „Zum Home-Bildschirm“.
 
 - Getrennte Stapel für MFH, Haus und ETW (gleiche Rechnung).
-- Pro Karte: Eckdaten, Miete pro Monat und Jahr, Bruttorendite, Faktor, Kreditrechnung (Annuität), Cashflow, Eigenkapital für die Kaufnebenkosten, Links zum Exposé und zu ImmoMetrica.
-- Oben einstellbar: Finanzierung 100/90/80 %, Zins, Laufzeit, Sortierung (Score, Cashflow, Rendite).
+- Pro Karte: Eckdaten, Miete pro Monat und Jahr, Bruttorendite, Faktor, Kreditrechnung (Annuität), Cashflow, steuerliche Betrachtung Jahr 1 (Cashflow nach Steuer), Eigenkapital für die Kaufnebenkosten, Links zum Exposé und zu ImmoMetrica.
+- Oben einstellbar: Finanzierung 100/90/80 %, Zins, Laufzeit, Steuersatz (Standard 30 %), AfA an/aus, Sortierung (Score, Cashflow, Cashflow nach Steuer, Rendite). Deal-Liste sortierbar nach Neueste, Cashflow, Cashflow nach Steuer.
 - Swipes werden dauerhaft im Gerät gespeichert (localStorage). Unter „Deals“ gibt es Deals und NoDeals, Export als CSV oder Text, unter „Mehr“ das Zurücksetzen.
 - Funktioniert offline (Service Worker). Es gibt keinen Server und kein Konto, und die Daten verlassen das Gerät nicht.
 
@@ -19,6 +19,10 @@ nach **rechts** wischen = Deal, nach **links** = NoDeal, ↶ = rückgängig.
 | Rate | Annuität `K·r / (1 − (1+r)^−n)`, r = Zins/12, n = Jahre·12 (Standard 5 %, 30 J.) |
 | Bewirtschaftung | 20 % der Ist-Miete |
 | Cashflow | Ist-Miete/Monat − Rate − Bewirtschaftung (vor Steuern) |
+| Zu versteuerndes Ergebnis (Jahr 1) | Ist-Jahresmiete − Summe der 12 Zinsanteile des 1. Jahres (Tilgung nicht absetzbar) − 20 % Bewirtschaftung − AfA |
+| AfA (Annahme, abschaltbar) | Gebäudeanteil 80 % von (Kaufpreis + Kaufnebenkosten); 2 % p.a., 2,5 % bei Baujahr vor 1925, 3 % ab Baujahr 2023, ohne Baujahr 2 % |
+| Steuer | Ergebnis × Steuersatz (Standard 30 %); negativ = Steuerersparnis durch Verrechnung mit anderen Einkünften |
+| Cashflow nach Steuer | Cashflow − Steuer bzw. + Ersparnis. Vereinfachte Schätzung, keine Steuerberatung |
 | Grunderwerbsteuer | Sachsen 5,5 %, Sachsen-Anhalt 5,0 % (PLZ 06…) bzw. Feld `land` |
 | Notar & Grundbuch | 2,0 % |
 | Makler | 3,57 %, 0 % wenn `privat: true`, oder eigener Wert im Feld `makler` |

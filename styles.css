@@ -100,3 +100,13 @@ a{color:var(--accent)}
 #actions[hidden],[hidden]{display:none!important}
 .deal .btns{flex-wrap:wrap}.deal .pill{flex:1 1 100px}
 .deal .mv{min-width:44px}
+
+/* dn-v3 Steuer */
+.big.wide{grid-column:1/-1}.big.st{background:linear-gradient(135deg,var(--card2),var(--fill))}.big.st b{font-size:30px}
+.row.r3{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;font-size:14px;align-items:baseline}.row.r3 span{min-width:0}.row.r3 b{min-width:74px;white-space:nowrap}
+.row.r3.hd{font-size:12px;padding:4px 0;text-transform:uppercase;letter-spacing:.3px}.row.r3.hd b{color:var(--sec);font-weight:500}
+.row.r3.big2{font-size:16px}.row.r3.sm span{padding-left:0}
+.tnote{font-size:12px;color:var(--ter);line-height:1.4;padding:6px 0 11px;border-top:.5px solid var(--sep)}
+.deal .kst{display:flex;align-items:baseline;gap:8px;margin-top:10px;padding:9px 12px;background:var(--fill);border-radius:12px;flex-wrap:wrap}
+.deal .kst span{font-size:13px;color:var(--sec);flex:1 1 auto}.deal .kst b{font-size:20px;font-variant-numeric:tabular-nums}.deal .kst small{font-size:13px;color:var(--sec)}
+.dtax{margin-top:8px}.dtax summary{font-size:13px;color:var(--accent);cursor:pointer;padding:4px 0}.dtax .grp{margin-top:6px}
