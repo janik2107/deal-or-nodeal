@@ -1,5 +1,5 @@
 'use strict';
-const VERSION='dn-v4';
+const VERSION='dn-v5';
 const KEY='dealnodeal-v1';
 const $=s=>document.querySelector(s),view=$('#view');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -18,8 +18,8 @@ const GREST={SN:5.5,ST:5.0,TH:5.0};const LAND={SN:'Sachsen',ST:'Sachsen-Anhalt',
 const landOf=x=>x.land&&GREST[x.land]?x.land:(String(x.plz||'').startsWith('06')?'ST':'SN');
 
 /* ---------- Speicher ---------- */
-function defaults(){return{v:1,settings:{fin:100,zins:5,jahre:30,sort:'score',mode:'MFH',theme:'auto',list:'deal',afa:true,steuer:30,dsort:'t'},L:{},sw:{},hist:[],stand:null,bundled:null}}
-function load(){try{const o=JSON.parse(localStorage.getItem(KEY));if(o&&o.L){const d=defaults();o.settings=Object.assign(d.settings,o.settings||{});o.sw=o.sw||{};o.hist=o.hist||[];for(const w of Object.values(o.sw)){if(w&&w.s&&!w.d)w.d=true}return o}}catch(e){}return defaults()}
+function defaults(){return{v:1,settings:{fin:100,zins:5,jahre:30,sort:'score',mode:'MFH',theme:'auto',list:'deal',afa:true,steuer:30,dsort:'t'},L:{},sw:{},p:{},hist:[],stand:null,bundled:null}}
+function load(){try{const o=JSON.parse(localStorage.getItem(KEY));if(o&&o.L){const d=defaults();o.settings=Object.assign(d.settings,o.settings||{});o.sw=o.sw||{};o.hist=o.hist||[];o.p=(o.p&&typeof o.p==='object')?o.p:{};for(const w of Object.values(o.sw)){if(w&&w.s&&!w.d)w.d=true}return o}}catch(e){}return defaults()}
 let S=load();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Speichern fehlgeschlagen')}};
 const U={tab:'swipe',busy:false};
@@ -63,6 +63,9 @@ const all=()=>Object.values(S.L);
 const ofMode=m=>all().filter(x=>x.typ===m);
 const isSuper=id=>{const w=S.sw[id];return!!(w&&w.d&&w.s)};
 const isDeal=id=>{const w=S.sw[id];return!!(w&&w.d)};
+const pst=id=>{const p=S.p&&S.p[id];return p&&p.st||''};
+const PST={a:'✉ Angefragt',i:'👍 Interessant',n:'👎 Nicht interessant'};
+function setP(id,st){if(!S.p)S.p={};if(!st){delete S.p[id];return}const old=S.p[id]||{};S.p[id]=Object.assign({},old,{st,t:Date.now()});if(!S.p[id].ta)S.p[id].ta=Date.now()}
 function sorted(list){const s=S.settings.sort;const k=s==='cfst'?(x=>calc(x).cfSt):s==='cf'?(x=>calc(x).cf):s==='brutto'?(x=>x.brutto||0):(x=>x.score||0);return list.map(x=>[k(x),x]).sort((a,b)=>b[0]-a[0]||(b[1].score||0)-(a[1].score||0)).map(a=>a[1])}
 const deck=()=>sorted(ofMode(S.settings.mode).filter(x=>!S.sw[x.id]));
 const lastOfMode=()=>{for(let i=S.hist.length-1;i>=0;i--){const x=S.L[S.hist[i]];if(x&&x.typ===S.settings.mode&&S.sw[x.id])return i}return-1};
@@ -159,26 +162,31 @@ function bindCard(){const c=$('#card');if(!c)return;if(U.anim==='back'){if(U.bac
 
 /* ---------- Deals ---------- */
 function decided(dv){return all().filter(x=>S.sw[x.id]&&S.sw[x.id].d===dv).sort((a,b)=>S.sw[b.id].t-S.sw[a.id].t)}
-function supers(){return decided(true).filter(x=>isSuper(x.id))}
+function supers(){return decided(true).filter(x=>isSuper(x.id)&&!pst(x.id))}
+function openDeals(){return decided(true).filter(x=>!pst(x.id))}
+function piped(st){return decided(true).filter(x=>pst(x.id)===st).sort((a,b)=>S.p[b.id].t-S.p[a.id].t)}
+function curList(){const l=S.settings.list,ps=S.settings.pst||'a';return l==='nodeal'?decided(false):l==='super'?supers():l==='anf'?piped(ps):openDeals()}
+function curName(){const l=S.settings.list,ps=S.settings.pst||'a';return l==='nodeal'?'nodeals':l==='super'?'superlikes':l==='anf'?({a:'angefragt',i:'interessant',n:'nicht-interessant'}[ps]):'deals'}
 function dsorted(L){const d=S.settings.dsort;if(d!=='cf'&&d!=='cfst')return L;const f=d==='cf'?(x=>calc(x).cf):(x=>calc(x).cfSt);return L.map(x=>[f(x),x]).sort((a,b)=>b[0]-a[0]).map(a=>a[1])}
 function withSupersFirst(L){const a=L.filter(x=>isSuper(x.id)),b=L.filter(x=>!isSuper(x.id));return dsorted(a).concat(dsorted(b))}
-function deals(){const l=S.settings.list||'deal',D=decided(true),N=decided(false),Su=supers();
- const raw=l==='nodeal'?N:l==='super'?Su:D;const L=l==='nodeal'?dsorted(raw):withSupersFirst(raw);
- const title=l==='nodeal'?'NoDeals':l==='super'?'Superlikes':'Deals';
- return`<h1>${title}</h1>${seg('list',[['deal','♥ Deals ('+D.length+')'],['super','★ Super ('+Su.length+')'],['nodeal','✕ NoDeals ('+N.length+')']],l)}
+function deals(){const l=S.settings.list||'deal',ps=S.settings.pst||'a',D=openDeals(),N=decided(false),Su=supers(),PA=piped('a'),PI=piped('i'),PN=piped('n'),NA=PA.length+PI.length+PN.length;
+ const raw=curList();const L=l==='nodeal'?dsorted(raw):l==='anf'?(S.settings.dsort==='t'?raw:dsorted(raw)):withSupersFirst(raw);
+ const title=l==='nodeal'?'NoDeals':l==='super'?'Superlikes':l==='anf'?({a:'Angefragt',i:'Interessant',n:'Nicht interessant'}[ps]):'Deals';
+ return`<h1>${title}</h1><div class="seg4">${seg('list',[['deal','♥ Deals ('+D.length+')'],['super','★ Super ('+Su.length+')'],['anf','✉ Angefragt ('+NA+')'],['nodeal','✕ NoDeals ('+N.length+')']],l)}</div>
+ ${l==='anf'?`<div style="margin-top:8px">${seg('pst',[['a','✉ Wartet ('+PA.length+')'],['i','👍 Ja ('+PI.length+')'],['n','👎 Nein ('+PN.length+')']],ps)}</div>`:''}
  ${L.length?`<div class="pl" style="margin:12px 2px 6px">Sortieren nach</div>${seg('dsort',[['t','Neueste'],['cf','Cashflow'],['cfst','Cashflow n. Steuer']],S.settings.dsort||'t')}`:''}
  ${L.length?`<div class="exp"><button data-act="csv">CSV</button><button data-act="copy">Text kopieren</button>${navigator.share?'<button data-act="share">Teilen</button>':''}</div>`:''}
- ${L.length?L.map(x=>{const k=calc(x);const imSame=x.immometrica&&x.immometrica===x.expose;const su=isSuper(x.id);return`<div class="deal${su?' super':''}"><div class="h"><div><b>${su?'<span class="star" aria-hidden="true">★</span> ':''}${esc(x.titel)}</b><div class="s">${esc((x.plz?x.plz+' ':'')+x.ort)} · ${x.typ}${x.we?' · '+x.we+' WE':''} · Score ${x.score??'–'}${su?' · Superlike':''}</div></div></div>
+ ${L.length?L.map(x=>{const k=calc(x);const imSame=x.immometrica&&x.immometrica===x.expose;const su=isSuper(x.id),p=pst(x.id);return`<div class="deal${su?' super':''}"><div class="h"><div><b>${su?'<span class="star" aria-hidden="true">★</span> ':''}${esc(x.titel)}</b><div class="s">${esc((x.plz?x.plz+' ':'')+x.ort)} · ${x.typ}${x.we?' · '+x.we+' WE':''} · Score ${x.score??'–'}${su?' · Superlike':''}${p?' · '+PST[p]:''}</div></div></div>
   <div class="k"><span>Preis <b>${eur(x.preis)}</b></span><span>Miete <b>${eur(k.mm)}</b>/M.</span><span>Brutto <b>${f1(x.brutto)} %</b></span><span>Cashflow <b class="${k.cf>=0?'pos':'neg'}">${sgn(k.cf)}</b></span></div>
   <div class="kst"><span>Cashflow nach Steuer</span><b class="${k.cfSt>=0?'pos':'neg'}">${sgn(k.cfSt)}/M.</b><small>${sgn(k.cfStJ)}/Jahr</small></div>
   <details class="dtax"><summary>Steuer Jahr 1 (Schätzung)</summary>${taxHtml(x,k)}</details>
-  <div class="btns"><a class="pill" href="${esc(x.expose||x.immometrica)}" target="_blank" rel="noopener">Exposé</a>${x.immometrica&&!imSame?`<a class="pill sec" href="${esc(x.immometrica)}" target="_blank" rel="noopener">ImmoMetrica</a>`:''}${l!=='nodeal'?`<button class="mv su ${su?'on':''}" data-act="togglesuper" data-id="${esc(x.id)}" aria-label="${su?'Superlike entfernen':'Als Superlike markieren'}">★</button>`:''}<button class="mv ${l==='nodeal'?'pos':'neg'}" data-act="flip" data-id="${esc(x.id)}" aria-label="${l==='nodeal'?'Zu Deals':'Zu NoDeals'}">${l==='nodeal'?'♥':'✕'}</button><button class="mv" data-act="unswipe" data-id="${esc(x.id)}" aria-label="Zurück in den Stapel">↶</button></div></div>`}).join('')
- :`<div class="empty"><div class="e">${l==='nodeal'?'✕':l==='super'?'★':'♥'}</div><h2>Noch keine ${title}</h2><p>${l==='super'?'Wische eine Karte nach oben oder tippe den blauen Stern.':l==='nodeal'?'Wische Karten nach links.':'Wische Karten nach rechts oder nach oben (Superlike).'}</p></div>`}
+  <div class="btns"><a class="pill" href="${esc(x.expose||x.immometrica)}" target="_blank" rel="noopener">Exposé</a>${x.immometrica&&!imSame?`<a class="pill sec" href="${esc(x.immometrica)}" target="_blank" rel="noopener">ImmoMetrica</a>`:''}${l==='anf'?`</div><div class="pbtns"><button class="pb ${p==='i'?'on yes':''}" data-act="pset" data-v="i" data-id="${esc(x.id)}">👍 Interessant</button><button class="pb ${p==='n'?'on no':''}" data-act="pset" data-v="n" data-id="${esc(x.id)}">👎 Nicht interessant</button><button class="mv" data-act="pset" data-v="" data-id="${esc(x.id)}" aria-label="Zurück zu Deals">↶</button></div></div>`:`${l!=='nodeal'?`<button class="mv su ${su?'on':''}" data-act="togglesuper" data-id="${esc(x.id)}" aria-label="${su?'Superlike entfernen':'Als Superlike markieren'}">★</button>`:''}<button class="mv ${l==='nodeal'?'pos':'neg'}" data-act="flip" data-id="${esc(x.id)}" aria-label="${l==='nodeal'?'Zu Deals':'Zu NoDeals'}">${l==='nodeal'?'♥':'✕'}</button><button class="mv" data-act="unswipe" data-id="${esc(x.id)}" aria-label="Zurück in den Stapel">↶</button></div>${l!=='nodeal'?`<button class="anfbtn" data-act="pset" data-v="a" data-id="${esc(x.id)}">✉ Angefragt / angeschrieben</button>`:''}</div>`}`}).join('')
+ :`<div class="empty"><div class="e">${l==='nodeal'?'✕':l==='super'?'★':l==='anf'?'✉':'♥'}</div><h2>${l==='anf'?'Hier ist noch nichts':'Noch keine '+title}</h2><p>${l==='anf'?(ps==='a'?'Tippe bei einem Deal auf „✉ Angefragt / angeschrieben“.':'Entscheide unter „Wartet“, ob ein angefragter Deal interessant ist.'):l==='super'?'Wische eine Karte nach oben oder tippe den blauen Stern.':l==='nodeal'?'Wische Karten nach links.':'Wische Karten nach rechts oder nach oben (Superlike).'}</p></div>`}
  ${L.length?`<div class="gh2">Als Text</div><pre class="txt" id="txt">${esc(exportText(L))}</pre><div class="foot">Kopieren und in den Chat einfügen. „★“ markiert Superlike, „✕“/„♥“ verschiebt, „↶“ legt zurück in den Stapel.</div>`:''}`}
-function exportText(L){const s=S.settings;return L.map((x,i)=>{const k=calc(x),w=S.sw[x.id],lab=w&&w.s?'★ Superlike':w&&w.d?'♥ Deal':'✕ NoDeal';return`${i+1}. [${lab}] ${x.ort} (${x.plz}) – ${x.titel}\n   ${eur(x.preis)} · Miete ${eur(k.mm)}/Monat · Brutto ${f1(x.brutto)} % · Faktor ${f1(x.faktor)} · Cashflow ${sgn(k.cf)}/Monat (${s.fin} %, ${f2(s.zins)} %, ${s.jahre} J.) · nach Steuer ${sgn(k.cfSt)}/Monat (Jahr 1, ${f1n(k.sq)} %${s.afa!==false?', mit AfA':', ohne AfA'}; Schätzung)\n   Exposé: ${x.expose||x.immometrica}${x.immometrica&&x.immometrica!==x.expose?'\n   ImmoMetrica: '+x.immometrica:''}`}).join('\n\n')}
+function exportText(L){const s=S.settings;return L.map((x,i)=>{const k=calc(x),w=S.sw[x.id],lab=(w&&w.s?'★ Superlike':w&&w.d?'♥ Deal':'✕ NoDeal')+(w&&w.d&&pst(x.id)?' · '+PST[pst(x.id)]:'');return`${i+1}. [${lab}] ${x.ort} (${x.plz}) – ${x.titel}\n   ${eur(x.preis)} · Miete ${eur(k.mm)}/Monat · Brutto ${f1(x.brutto)} % · Faktor ${f1(x.faktor)} · Cashflow ${sgn(k.cf)}/Monat (${s.fin} %, ${f2(s.zins)} %, ${s.jahre} J.) · nach Steuer ${sgn(k.cfSt)}/Monat (Jahr 1, ${f1n(k.sq)} %${s.afa!==false?', mit AfA':', ohne AfA'}; Schätzung)\n   Exposé: ${x.expose||x.immometrica}${x.immometrica&&x.immometrica!==x.expose?'\n   ImmoMetrica: '+x.immometrica:''}`}).join('\n\n')}
 function exportCSV(L){const n=v=>isFinite(v)?(+v.toFixed(2)).toLocaleString('de-DE',{useGrouping:false,maximumFractionDigits:2}):'';const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
- const H=['Entscheidung','Superlike','Typ','Ort','PLZ','Titel','Kaufpreis','Wohnfläche','WE','Baujahr','Zustand','Miete Monat','Miete Jahr','Bruttorendite %','Faktor','Score','Darlehen','Rate Monat','Cashflow Monat','Zinsen Jahr 1','AfA Jahr 1','zu verst. Ergebnis Jahr 1','Steuer Jahr 1 (negativ = Ersparnis)','Cashflow nach Steuer Monat','Cashflow nach Steuer Jahr 1','Eigenkapital','Exposé','ImmoMetrica','Bewertet am'];
- const R=L.map(x=>{const k=calc(x),w=S.sw[x.id];return[q(w&&w.s?'Superlike':w&&w.d?'Deal':'NoDeal'),q(w&&w.s?'ja':'nein'),q(x.typ),q(x.ort),q(x.plz),q(x.titel),n(x.preis),n(x.wfl),n(x.we),n(x.baujahr),q(x.zustand),n(k.mm),n(x.mieteJahr),n(x.brutto),n(x.faktor),n(x.score),n(k.K),n(k.rate),n(k.cf),n(k.zJ),n(k.afaJ),n(k.zvE),n(k.stJ),n(k.cfSt),n(k.cfStJ),n(k.ek),q(x.expose),q(x.immometrica),q(w?new Date(w.t).toLocaleString('de-DE'):'')].join(';')});
+ const H=['Entscheidung','Superlike','Typ','Ort','PLZ','Titel','Kaufpreis','Wohnfläche','WE','Baujahr','Zustand','Miete Monat','Miete Jahr','Bruttorendite %','Faktor','Score','Darlehen','Rate Monat','Cashflow Monat','Zinsen Jahr 1','AfA Jahr 1','zu verst. Ergebnis Jahr 1','Steuer Jahr 1 (negativ = Ersparnis)','Cashflow nach Steuer Monat','Cashflow nach Steuer Jahr 1','Eigenkapital','Exposé','ImmoMetrica','Bewertet am','Status'];
+ const R=L.map(x=>{const k=calc(x),w=S.sw[x.id];return[q(w&&w.s?'Superlike':w&&w.d?'Deal':'NoDeal'),q(w&&w.s?'ja':'nein'),q(x.typ),q(x.ort),q(x.plz),q(x.titel),n(x.preis),n(x.wfl),n(x.we),n(x.baujahr),q(x.zustand),n(k.mm),n(x.mieteJahr),n(x.brutto),n(x.faktor),n(x.score),n(k.K),n(k.rate),n(k.cf),n(k.zJ),n(k.afaJ),n(k.zvE),n(k.stJ),n(k.cfSt),n(k.cfStJ),n(k.ek),q(x.expose),q(x.immometrica),q(w?new Date(w.t).toLocaleString('de-DE'):''),q(w&&w.d&&pst(x.id)?PST[pst(x.id)].slice(2).trim():'')].join(';')});
  return'\ufeff'+[H.map(q).join(';'),...R].join('\r\n')}
 function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
 async function copy(t){try{await navigator.clipboard.writeText(t);return true}catch(e){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();return ok}}
@@ -215,14 +223,16 @@ document.addEventListener('click',async e=>{const tb=e.target.closest('[data-tab
  case'zins':s.zins=Math.max(0,Math.min(20,Math.round((s.zins+ +v)*100)/100));save();render();break;
  case'jahre':s.jahre=Math.max(1,Math.min(50,s.jahre+ +v));save();render();break;
  case'list':s.list=v;save();render();break;
+ case'pst':s.pst=v;save();render();break;
+ case'pset':{if(!isDeal(id))break;setP(id,v);save();toast(v==='a'?'Zu „Angefragt“ verschoben':v==='i'?'Als interessant markiert':v==='n'?'Als nicht interessant markiert':'Zurück bei Deals');render();break}
  case'theme':s.theme=v;save();render();break;
  case'flip':{const cur=S.sw[id]||{};S.sw[id]={d:!cur.d,t:Date.now()};save();toast(S.sw[id].d?'Zu Deals verschoben':'Zu NoDeals verschoben');render();break}
  case'togglesuper':{const cur=S.sw[id]||{d:true,t:Date.now()};if(cur.s){S.sw[id]={d:true,t:Date.now()};toast('Superlike entfernt')}else{S.sw[id]={d:true,s:true,t:Date.now()};toast('Als Superlike markiert')}save();render();break}
  case'unswipe':delete S.sw[id];S.hist=S.hist.filter(h=>h!==id);save();toast('Zurück im Stapel');render();break;
- case'csv':{const L=s.list==='nodeal'?decided(false):s.list==='super'?supers():decided(true);download((s.list==='nodeal'?'nodeals':s.list==='super'?'superlikes':'deals')+'-'+new Date().toISOString().slice(0,10)+'.csv',exportCSV(L),'text/csv;charset=utf-8');toast('CSV erstellt');break}
+ case'csv':{const L=curList();download(curName()+'-'+new Date().toISOString().slice(0,10)+'.csv',exportCSV(L),'text/csv;charset=utf-8');toast('CSV erstellt');break}
  case'csvall':{const L=[...decided(true),...decided(false)];if(!L.length){toast('Noch nichts bewertet');break}download('bewertungen-'+new Date().toISOString().slice(0,10)+'.csv',exportCSV(L),'text/csv;charset=utf-8');toast('CSV erstellt');break}
- case'copy':{const L=s.list==='nodeal'?decided(false):s.list==='super'?supers():decided(true);const ok=await copy(exportText(L));toast(ok?'Liste kopiert':'Bitte Text unten markieren und kopieren');break}
- case'share':try{const L=s.list==='nodeal'?decided(false):s.list==='super'?supers():decided(true);await navigator.share({title:'Deal or NoDeal',text:exportText(L)})}catch(_){}break;
+ case'copy':{const L=curList();const ok=await copy(exportText(L));toast(ok?'Liste kopiert':'Bitte Text unten markieren und kopieren');break}
+ case'share':try{const L=curList();await navigator.share({title:'Deal or NoDeal',text:exportText(L)})}catch(_){}break;
  case'import':$('#file').click();break;
  case'reload':try{const r=await loadBundled(true);toast(r?`${r.neu} neu · ${r.upd} aktualisiert`:'Keine Daten');render()}catch(_){toast('Offline – Daten konnten nicht geladen werden')}break;
  case'reset':if(confirm('Alle Swipes (Deals, Superlikes und NoDeals) löschen? Die Objekte bleiben.')){S.sw={};S.hist=[];save();toast('Zurückgesetzt');render()}break;
