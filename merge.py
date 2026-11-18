@@ -19,7 +19,7 @@ FIELDS = ['id','typ','ort','plz','titel','preis','wfl','we','baujahr','zustand',
           'netto','score','expose','immometrica','linkstatus','privat','makler','land']
 NUM = ['preis','wfl','we','baujahr','mieteJahr','brutto','faktor','preisQm','netto','score','makler']
 HOSTS = {'immometrica.com','immobilienscout24.de','immowelt.de','immonet.de','kleinanzeigen.de','ohne-makler.net',
-         'immobilien.sparkasse.de','markt.de','regionalimmobilien24.de','wohnungsboerse.net','zvg-portal.de','zvg24.net'}
+         'immobilien.sparkasse.de','markt.de','regionalimmobilien24.de','wohnungsboerse.net','zvg-portal.de','zvg24.net','immonika.de'}
 PII = [(r'[\w.+-]+@[\w-]+\.[\w.]+', 'E-Mail-Adresse'),
        (r'(?:\+49|\b0)\s?\d{2,5}[\s/-]?\d{3,}[\s-]?\d{0,6}', 'Telefonnummer'),
        (r'\b(?:Herr|Frau|Hr\.|Fr\.)\s+[A-ZÄÖÜ][a-zäöüß]+', 'Personenname'),
